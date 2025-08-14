@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Juego Hiragana</title>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <script src="js/tailwin_3.4.17.js"></script>
+    <style>
+      .char {
+        transition: transform 0.3s ease, opacity 0.3s ease;
+      }
+      .char.correct {
+        border: 3px solid #22c55e; /* verde */
+        border-radius: 9999px;
+      }
+      .char.wrong {
+        border: 3px solid #ef4444; /* rojo */
+        border-radius: 9999px;
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+      .zoom-center {
+        transition: all 0.6s ease;
+        transform: rotate(0deg) scale(3);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4"
+  >
+    <!-- Pronunciación -->
+    <div id="target-romaji" class="text-4xl font-bold mb-4"></div>
+
+    <!-- Panel de juego -->
+    <div
+      id="game-panel"
+      class="relative w-full max-w-md h-[400px] bg-gray-800 rounded-lg overflow-hidden border-4 border-gray-700"
+    ></div>
+
+    <!-- Modal de acierto -->
+    <div
+      id="success-modal"
+      class="hidden fixed inset-0 bg-black/70 flex items-center justify-center"
+    >
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+        <h2 class="text-green-400 text-xl font-bold mb-4">¡Correcto!</h2>
+        <button
+          id="continue-btn"
+          class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded text-white"
+        >
+          Continuar
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal de reinicio -->
+    <div
+      id="restart-modal"
+      class="hidden fixed inset-0 bg-black/70 flex items-center justify-center"
+    >
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+        <h2 class="text-red-400 text-xl font-bold mb-4">Fin de la ronda</h2>
+        <button
+          id="restart-btn"
+          class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-white"
+        >
+          Reiniciar
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer de contacto -->
+    <footer
+      class="flex flex-col justify-center items-center gap-2 mt-8 w-full p-4 rounded-lg text-center"
+    >
+      <!-- <h2 class="text-lg font-bold mb-3">Contacto</h2> -->
+      <!-- WhatsApp -->
+      <div
+        class="flex-col justify-center items-center w-[300px] border border-red rounded-lg p-1"
+      >
+        <a
+          href="https://wa.me/5351251511"
+          target="_blank"
+          class="flex place-content-between items-center gap-2 hover:text-green-400"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="256"
+            height="258"
+            viewBox="0 0 256 258"
+            class="w-8 h-8 ml-2"
+          >
+            <defs>
+              <linearGradient
+                id="SVGBRLHCcSy"
+                x1="50%"
+                x2="50%"
+                y1="100%"
+                y2="0%"
+              >
+                <stop offset="0%" stop-color="#1faf38" />
+                <stop offset="100%" stop-color="#60d669" />
+              </linearGradient>
+              <linearGradient
+                id="SVGHW6lecxh"
+                x1="50%"
+                x2="50%"
+                y1="100%"
+                y2="0%"
+              >
+                <stop offset="0%" stop-color="#f9f9f9" />
+                <stop offset="100%" stop-color="#fff" />
+              </linearGradient>
+            </defs>
+            <path
+              fill="url(#SVGBRLHCcSy)"
+              d="M5.463 127.456c-.006 21.677 5.658 42.843 16.428 61.499L4.433 252.697l65.232-17.104a123 123 0 0 0 58.8 14.97h.054c67.815 0 123.018-55.183 123.047-123.01c.013-32.867-12.775-63.773-36.009-87.025c-23.23-23.25-54.125-36.061-87.043-36.076c-67.823 0-123.022 55.18-123.05 123.004"
+            />
+            <path
+              fill="url(#SVGHW6lecxh)"
+              d="M1.07 127.416c-.007 22.457 5.86 44.38 17.014 63.704L0 257.147l67.571-17.717c18.618 10.151 39.58 15.503 60.91 15.511h.055c70.248 0 127.434-57.168 127.464-127.423c.012-34.048-13.236-66.065-37.3-90.15C194.633 13.286 162.633.014 128.536 0C58.276 0 1.099 57.16 1.071 127.416m40.24 60.376l-2.523-4.005c-10.606-16.864-16.204-36.352-16.196-56.363C22.614 69.029 70.138 21.52 128.576 21.52c28.3.012 54.896 11.044 74.9 31.06c20.003 20.018 31.01 46.628 31.003 74.93c-.026 58.395-47.551 105.91-105.943 105.91h-.042c-19.013-.01-37.66-5.116-53.922-14.765l-3.87-2.295l-40.098 10.513z"
+            />
+            <path
+              fill="#fff"
+              d="M96.678 74.148c-2.386-5.303-4.897-5.41-7.166-5.503c-1.858-.08-3.982-.074-6.104-.074c-2.124 0-5.575.799-8.492 3.984c-2.92 3.188-11.148 10.892-11.148 26.561s11.413 30.813 13.004 32.94c1.593 2.123 22.033 35.307 54.405 48.073c26.904 10.609 32.379 8.499 38.218 7.967c5.84-.53 18.844-7.702 21.497-15.139c2.655-7.436 2.655-13.81 1.859-15.142c-.796-1.327-2.92-2.124-6.105-3.716s-18.844-9.298-21.763-10.361c-2.92-1.062-5.043-1.592-7.167 1.597c-2.124 3.184-8.223 10.356-10.082 12.48c-1.857 2.129-3.716 2.394-6.9.801c-3.187-1.598-13.444-4.957-25.613-15.806c-9.468-8.442-15.86-18.867-17.718-22.056c-1.858-3.184-.199-4.91 1.398-6.497c1.431-1.427 3.186-3.719 4.78-5.578c1.588-1.86 2.118-3.187 3.18-5.311c1.063-2.126.531-3.986-.264-5.579c-.798-1.593-6.987-17.343-9.819-23.64"
+            />
+          </svg>
+          <div class="flex justify-center items-center w-full">
+            <span class="text-sm text-gray-500 dark:text-gray-400"
+              >+5351251511</span
+            >
+          </div>
+        </a>
+      </div>
+
+      <!-- Gmail -->
+      <div
+        class="flex-col justify-center items-center w-[300px] border border-red rounded-lg p-1"
+      >
+        <a
+          href="mailto:renearteaga261998@gmail.com"
+          class="flex place-content-between items-center gap-2 hover:text-green-400"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="256"
+            height="193"
+            viewBox="0 0 256 193"
+            class="w-8 h-8 ml-2"
+          >
+            <path
+              fill="#4285f4"
+              d="M58.182 192.05V93.14L27.507 65.077L0 49.504v125.091c0 9.658 7.825 17.455 17.455 17.455z"
+            />
+            <path
+              fill="#34a853"
+              d="M197.818 192.05h40.727c9.659 0 17.455-7.826 17.455-17.455V49.505l-31.156 17.837l-27.026 25.798z"
+            />
+            <path
+              fill="#ea4335"
+              d="m58.182 93.14l-4.174-38.647l4.174-36.989L128 69.868l69.818-52.364l4.669 34.992l-4.669 40.644L128 145.504z"
+            />
+            <path
+              fill="#fbbc04"
+              d="M197.818 17.504V93.14L256 49.504V26.231c0-21.585-24.64-33.89-41.89-20.945z"
+            />
+            <path
+              fill="#c5221f"
+              d="m0 49.504l26.759 20.07L58.182 93.14V17.504L41.89 5.286C24.61-7.66 0 4.646 0 26.23z"
+            />
+          </svg>
+          <div class="flex justify-center items-center w-full">
+            <span class="text-sm text-gray-500 dark:text-gray-400"
+              >renearteaga261998@gmail.com</span
+            >
+          </div>
+        </a>
+      </div>
+
+      <!-- LinkedIn -->
+      <div
+        class="flex-col justify-center items-center w-[300px] border border-red rounded-lg p-1"
+      >
+        <a
+          href="https://www.linkedin.com/in/rene-lazaro-collado-arteaga"
+          target="_blank"
+          class="flex place-content-between items-center gap-2 hover:text-green-400"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="128"
+            height="128"
+            viewBox="0 0 128 128"
+            class="w-8 h-8 ml-2"
+          >
+            <path
+              fill="#0076b2"
+              d="M116 3H12a8.91 8.91 0 0 0-9 8.8v104.42a8.91 8.91 0 0 0 9 8.78h104a8.93 8.93 0 0 0 9-8.81V11.77A8.93 8.93 0 0 0 116 3"
+            />
+            <path
+              fill="#fff"
+              d="M21.06 48.73h18.11V107H21.06zm9.06-29a10.5 10.5 0 1 1-10.5 10.49a10.5 10.5 0 0 1 10.5-10.49m20.41 29h17.36v8h.24c2.42-4.58 8.32-9.41 17.13-9.41C103.6 47.28 107 59.35 107 75v32H88.89V78.65c0-6.75-.12-15.44-9.41-15.44s-10.87 7.36-10.87 15V107H50.53z"
+            />
+          </svg>
+
+          <div class="flex justify-center items-center w-full">
+            <span class="text-sm text-gray-500 dark:text-gray-400"
+              >@rene-lazaro-collado-arteaga</span
+            >
+          </div>
+        </a>
+      </div>
+
+      <!-- GitHub -->
+      <div
+        class="flex-col justify-center items-center w-[300px] border border-red rounded-lg p-1"
+      >
+        <a
+          href="https://github.com/critBus"
+          target="_blank"
+          class="flex place-content-between items-center gap-2 hover:text-green-400"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="256"
+            height="256"
+            viewBox="0 0 256 256"
+            class="w-8 h-8 ml-2"
+          >
+            <g fill="none">
+              <rect width="256" height="256" fill="#f4f2ed" rx="60" />
+              <path
+                fill="#161614"
+                d="M128.001 30C72.779 30 28 74.77 28 130.001c0 44.183 28.653 81.667 68.387 94.89c4.997.926 6.832-2.169 6.832-4.81c0-2.385-.093-10.262-.136-18.618c-27.82 6.049-33.69-11.799-33.69-11.799c-4.55-11.559-11.104-14.632-11.104-14.632c-9.073-6.207.684-6.079.684-6.079c10.042.705 15.33 10.305 15.33 10.305c8.919 15.288 23.394 10.868 29.1 8.313c.898-6.464 3.489-10.875 6.349-13.372c-22.211-2.529-45.56-11.104-45.56-49.421c0-10.918 3.906-19.839 10.303-26.842c-1.039-2.519-4.462-12.69.968-26.464c0 0 8.398-2.687 27.508 10.25c7.977-2.215 16.531-3.326 25.03-3.364c8.498.038 17.06 1.149 25.051 3.365c19.087-12.939 27.473-10.25 27.473-10.25c5.443 13.773 2.019 23.945.98 26.463c6.412 7.003 10.292 15.924 10.292 26.842c0 38.409-23.394 46.866-45.662 49.341c3.587 3.104 6.783 9.189 6.783 18.519c0 13.38-.116 24.149-.116 27.443c0 2.661 1.8 5.779 6.869 4.797C199.383 211.64 228 174.169 228 130.001C228 74.771 183.227 30 128.001 30M65.454 172.453c-.22.497-1.002.646-1.714.305c-.726-.326-1.133-1.004-.898-1.502c.215-.512.999-.654 1.722-.311c.727.326 1.141 1.01.89 1.508m4.919 4.389c-.477.443-1.41.237-2.042-.462c-.654-.697-.777-1.629-.293-2.078c.491-.442 1.396-.235 2.051.462c.654.706.782 1.631.284 2.078m3.374 5.616c-.613.426-1.615.027-2.234-.863c-.613-.889-.613-1.955.013-2.383c.621-.427 1.608-.043 2.236.84c.611.904.611 1.971-.015 2.406m5.707 6.504c-.548.604-1.715.442-2.57-.383c-.874-.806-1.118-1.95-.568-2.555c.555-.606 1.729-.435 2.59.383c.868.804 1.133 1.957.548 2.555m7.376 2.195c-.242.784-1.366 1.14-2.499.807c-1.13-.343-1.871-1.26-1.642-2.052c.235-.788 1.364-1.159 2.505-.803c1.13.341 1.871 1.252 1.636 2.048m8.394.932c.028.824-.932 1.508-2.121 1.523c-1.196.027-2.163-.641-2.176-1.452c0-.833.939-1.51 2.134-1.53c1.19-.023 2.163.639 2.163 1.459m8.246-.316c.143.804-.683 1.631-1.864 1.851c-1.161.212-2.236-.285-2.383-1.083c-.144-.825.697-1.651 1.856-1.865c1.183-.205 2.241.279 2.391 1.097"
+              />
+            </g>
+          </svg>
+
+          <div class="flex justify-center items-center w-full">
+            <span class="text-sm text-gray-500 dark:text-gray-400"
+              >@critBus</span
+            >
+          </div>
+        </a>
+      </div>
+    </footer>
+
+    <script>
+      const hiragana = [
+        { char: "あ", romaji: "a" },
+        { char: "い", romaji: "i" },
+        { char: "う", romaji: "u" },
+        { char: "え", romaji: "e" },
+        { char: "お", romaji: "o" },
+
+        { char: "か", romaji: "ka" },
+        { char: "き", romaji: "ki" },
+        { char: "く", romaji: "ku" },
+        { char: "け", romaji: "ke" },
+        { char: "こ", romaji: "ko" },
+
+        { char: "さ", romaji: "sa" },
+        { char: "し", romaji: "shi" },
+        { char: "す", romaji: "su" },
+        { char: "せ", romaji: "se" },
+        { char: "そ", romaji: "so" },
+
+        { char: "た", romaji: "ta" },
+        { char: "ち", romaji: "chi" },
+        { char: "つ", romaji: "tsu" },
+        { char: "て", romaji: "te" },
+        { char: "と", romaji: "to" },
+
+        { char: "な", romaji: "na" },
+        { char: "に", romaji: "ni" },
+        { char: "ぬ", romaji: "nu" },
+        { char: "ね", romaji: "ne" },
+        { char: "の", romaji: "no" },
+
+        { char: "は", romaji: "ha" },
+        { char: "ひ", romaji: "hi" },
+        { char: "ふ", romaji: "fu" },
+        { char: "へ", romaji: "he" },
+        { char: "ほ", romaji: "ho" },
+
+        { char: "ま", romaji: "ma" },
+        { char: "み", romaji: "mi" },
+        { char: "む", romaji: "mu" },
+        { char: "め", romaji: "me" },
+        { char: "も", romaji: "mo" },
+
+        { char: "や", romaji: "ya" },
+        { char: "ゆ", romaji: "yu" },
+        { char: "よ", romaji: "yo" },
+
+        { char: "ら", romaji: "ra" },
+        { char: "り", romaji: "ri" },
+        { char: "る", romaji: "ru" },
+        { char: "れ", romaji: "re" },
+        { char: "ろ", romaji: "ro" },
+
+        { char: "わ", romaji: "wa" },
+        { char: "を", romaji: "wo" },
+
+        { char: "ん", romaji: "n" },
+      ];
+
+      let currentTarget = null;
+      let currentChars = [];
+      const panel = document.getElementById("game-panel");
+      const targetRomajiEl = document.getElementById("target-romaji");
+      const successModal = document.getElementById("success-modal");
+      const restartModal = document.getElementById("restart-modal");
+      const continueBtn = document.getElementById("continue-btn");
+      const restartBtn = document.getElementById("restart-btn");
+
+      function randomPositionNoCollision(
+        existing,
+        size = 60,
+        maxAttempts = 100
+      ) {
+        let attempt = 0;
+        while (attempt < maxAttempts) {
+          const x = Math.random() * (panel.clientWidth - size);
+          const y = Math.random() * (panel.clientHeight - size);
+          const angle = Math.random() * 90 - 45;
+
+          // Comprobamos si hay colisión con algún carácter existente
+          let collision = false;
+          for (const pos of existing) {
+            const dx = x - pos.x;
+            const dy = y - pos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < size) {
+              // menos que el ancho => colisión
+              collision = true;
+              break;
+            }
+          }
+
+          if (!collision) {
+            return { x, y, angle };
+          }
+          attempt++;
+        }
+        // Si no encontramos posición libre tras maxAttempts, devolvemos algo al azar
+        return {
+          x: Math.random() * (panel.clientWidth - size),
+          y: Math.random() * (panel.clientHeight - size),
+          angle: Math.random() * 90 - 45,
+        };
+      }
+
+      function startRound() {
+        panel.innerHTML = "";
+        currentChars = [];
+        const shuffled = [...hiragana].sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, 15); // entre 8 y 10
+        currentTarget = selected[Math.floor(Math.random() * selected.length)];
+        targetRomajiEl.textContent = currentTarget.romaji;
+
+        const placedPositions = [];
+
+        selected.forEach((h) => {
+          const { x, y, angle } = randomPositionNoCollision(placedPositions);
+          placedPositions.push({ x, y });
+
+          const el = document.createElement("div");
+          el.textContent = h.char;
+          el.className =
+            "char absolute text-4xl cursor-pointer flex items-center justify-center w-[60px] h-[60px]";
+          el.style.left = `${x}px`;
+          el.style.top = `${y}px`;
+          el.style.transform = `rotate(${angle}deg)`;
+          el.addEventListener("click", () => handleClick(h, el));
+          panel.appendChild(el);
+          currentChars.push({ data: h, el });
+        });
+      }
+
+      function handleClick(h, el) {
+        if (h.char === currentTarget.char) {
+          el.classList.add("correct");
+          setTimeout(() => {
+            successModal.classList.remove("hidden");
+          }, 300);
+        } else {
+          el.classList.add("wrong");
+          const romajiLabel = document.createElement("div");
+          romajiLabel.textContent = h.romaji;
+          romajiLabel.className = "absolute text-red-400 text-sm";
+          romajiLabel.style.left = el.style.left;
+          romajiLabel.style.top = el.style.top;
+          panel.appendChild(romajiLabel);
+          setTimeout(() => romajiLabel.remove(), 800);
+          setTimeout(() => el.remove(), 300);
+
+          currentChars = currentChars.filter((c) => c.data.char !== h.char);
+          if (currentChars.length === 1) {
+            triggerLastOne();
+          }
+        }
+      }
+
+      function triggerLastOne() {
+        const last = currentChars[0];
+        panel.style.borderColor = "#ef4444";
+        last.el.classList.add("zoom-center");
+        last.el.style.left = `${panel.clientWidth / 2 - 30}px`;
+        last.el.style.top = `${panel.clientHeight / 2 - 30}px`;
+        setTimeout(() => {
+          restartModal.classList.remove("hidden");
+        }, 1200);
+      }
+
+      continueBtn.addEventListener("click", () => {
+        successModal.classList.add("hidden");
+        startRound();
+      });
+
+      restartBtn.addEventListener("click", () => {
+        restartModal.classList.add("hidden");
+        panel.style.borderColor = "#374151";
+        startRound();
+      });
+
+      startRound();
+    </script>
+  </body>
+</html>
