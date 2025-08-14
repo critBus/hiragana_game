@@ -37,6 +37,7 @@ dependencies:
 
   webview_flutter: ^4.2.2
   webview_flutter_android:
+  url_launcher: ^6.1.7
 
 dev_dependencies:
   flutter_test:
@@ -92,6 +93,6 @@ flutter:
 
   assets:
     - assets/web/
-    - assets/web/css/
+    # - assets/web/css/
     - assets/web/js/
-    - assets/web/img/
+    # - assets/web/img/
